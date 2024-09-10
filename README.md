@@ -6,8 +6,8 @@ This tool is currently a Work In Progress.
 
 ## Features
 
-- Asynchronous scanning using the `asyncio` library for improved performance
-- Uses `aiodns` for asynchronous DNS resolution, improving performance over blocking `socket.getaddrinfo()`
+- Asynchronous scanning using the `dnspython` library for improved performance
+- Uses `dnspython` for asynchronous DNS resolution, improving performance over blocking `socket.getaddrinfo()`
 - Support for scanning both IPv4 and IPv6 addresses
 - Handles scenarios where a hostname resolves to multiple IP addresses, scanning ports on each resolved IP address
 - Configurable timeout for each connection attempt
@@ -32,7 +32,7 @@ This tool is currently a Work In Progress.
 ## Requirements
 
 - Python 3.7 or higher
-- `aiodns` library (can be installed via pip: `pip install aiodns`)
+- `dnspython` library (can be installed via pip: `pip install dnspython`)
 
 ## Usage
 

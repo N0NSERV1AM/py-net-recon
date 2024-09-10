@@ -8,15 +8,9 @@ supporting both IPv4 and IPv6 addresses.
 
 import argparse
 import asyncio
-import socket
-import sys
 from typing import List, Tuple
 
-import aiodns
-
-# Windows-specific event loop policy
-if sys.platform.startswith("win"):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+import dns.asyncresolver
 
 
 async def resolve_hostname(hostname: str) -> List[str]:
@@ -29,20 +23,25 @@ async def resolve_hostname(hostname: str) -> List[str]:
     Returns:
         List[str]: A list of IP addresses (both IPv4 and IPv6).
     """
-    resolver = aiodns.DNSResolver()
+    resolver = dns.asyncresolver.Resolver()
     ip_addresses = []
 
-    for family in (socket.AF_INET, socket.AF_INET6):
-        try:
-            result = await resolver.gethostbyname(hostname, family)
-            ip_addresses.extend(result.addresses)
-        except aiodns.error.DNSError:
-            continue  # No addresses found for this family
+    try:
+        results = await asyncio.gather(
+            *[resolver.resolve(hostname, qtype) for qtype in ("A", "AAAA")]
+        )
+        for result in results:
+            if result.rrset is not None:
+                ip_addresses.extend(str(rr) for rr in result.rrset)
+    except Exception:
+        pass  # Handle any exceptions
 
     return ip_addresses
 
 
-async def is_port_open(host: str, port: int, timeout: float = 1.0) -> Tuple[str, int, bool]:
+async def is_port_open(
+    host: str, port: int, timeout: float = 1.0
+) -> Tuple[str, int, bool]:
     """
     Check if a port is open on a given host.
 
@@ -122,7 +121,9 @@ def main(hostname: str, start_port: int, end_port: int, timeout: float) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Asynchronous Port Scanner (IPv4 and IPv6)")
+    parser = argparse.ArgumentParser(
+        description="Asynchronous Port Scanner (IPv4 and IPv6)"
+    )
     parser.add_argument("hostname", help="The hostname to scan")
     parser.add_argument("start_port", type=int, help="The starting port number")
     parser.add_argument("end_port", type=int, help="The ending port number")
@@ -135,4 +136,3 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args.hostname, args.start_port, args.end_port, args.timeout)
-    
